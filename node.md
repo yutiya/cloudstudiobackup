@@ -1,3 +1,7 @@
+pip install "numpy==1.24.2"
+pip install "torch==2.0.0"
+pip install "torchvision==0.15.1"
+
 pip install modelscope
 
 from modelscope.utils.hf_util import AutoModelForCausalLM, AutoTokenizer
@@ -14,3 +18,7 @@ pip install torchaudio
 
 apt-get update
 apt install ffmpeg
+
+
+pip install "pynini==2.1.5"
+apt-get install sox libsox-dev
