@@ -15,7 +15,7 @@ model = AutoModel(
 
 # en
 res = model.generate(
-    input=f"{model.model_path}/example/en.mp3",
+    input=f"{model.model_path}/example/zh.mp3",
     cache={},
     language="auto",  # "zn", "en", "yue", "ja", "ko", "nospeech"
     use_itn=True,
