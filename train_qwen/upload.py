@@ -6,12 +6,12 @@ api.login(YOUR_ACCESS_TOKEN)
 
 api.create_model(
     f"Meonex/Qwen2.5-0.5B-Instruct-16bit",
-    visibility=1,
+    visibility=5,
     chinese_name="Qwen2.5-0.5B-Instruct-16bit"
 )
 
 api.upload_folder(
     repo_id=f"Meonex/Qwen2.5-0.5B-Instruct-16bit",
-    folder_path='./qwen2.5-export-merged_16bit',
+    folder_path='/workspace/Qwen2.5-0.5B-Instruct-16bit',
     commit_message='upload model folder to repo',
 )

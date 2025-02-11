@@ -3,8 +3,10 @@ import torch
 from trl import SFTTrainer
 from transformers import TrainingArguments
 from unsloth import is_bfloat16_supported
+from transformers import TextStreamer
+from datasets import load_dataset
 
-max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
+max_seq_length = 4096 # Choose any! We auto support RoPE Scaling internally!
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
 load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
 
@@ -30,15 +32,15 @@ model = FastLanguageModel.get_peft_model(
     loftq_config = None, # And LoftQ
 )
 
-alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+alpaca_prompt = """下面是一条描述任务的指令，并提供了相应的内容去执行。写一个适当的回复完成该任务。
 
-### Instruction:
+### 指令:
 {}
 
-### Input:
+### 内容:
 {}
 
-### Response:
+### 回复:
 {}"""
 
 EOS_TOKEN = tokenizer.eos_token # Must add EOS_TOKEN
@@ -54,7 +56,6 @@ def formatting_prompts_func(examples):
     return { "text" : texts, }
 pass
 
-from datasets import load_dataset
 dataset = load_dataset("/workspace/cloudstudiobackup/train_qwen/dataset", split = "train")
 dataset = dataset.map(formatting_prompts_func, batched = True,)
 
@@ -88,19 +89,32 @@ trainer = SFTTrainer(
 trainer_stats = trainer.train()
 
 # 推理
-FastLanguageModel.for_inference(model) # Enable native 2x faster inference
-inputs = tokenizer(
-[
-    alpaca_prompt.format(
-        "Continue the fibonnaci sequence.", # instruction
-        "1, 1, 2, 3, 5, 8", # input
-        "", # output - leave this blank for generation!
-    )
-], return_tensors = "pt").to("cuda")
+# FastLanguageModel.for_inference(model) # Enable native 2x faster inference
+# inputs = tokenizer(
+# [
+#     alpaca_prompt.format(
+#         "Continue the fibonnaci sequence.", # instruction
+#         "1, 1, 2, 3, 5, 8", # input
+#         "", # output - leave this blank for generation!
+#     )
+# ], return_tensors = "pt").to("cuda")
+# outputs = model.generate(**inputs, max_new_tokens = 64, use_cache = True)
+# tokenizer.batch_decode(outputs)
 
-outputs = model.generate(**inputs, max_new_tokens = 64, use_cache = True)
-tokenizer.batch_decode(outputs)
+# 推理 文本流
+# FastLanguageModel.for_inference(model) # Enable native 2x faster inference
+# inputs = tokenizer(
+# [
+#     alpaca_prompt.format(
+#         "Continue the fibonnaci sequence.", # instruction
+#         "1, 1, 2, 3, 5, 8", # input
+#         "", # output - leave this blank for generation!
+#     )
+# ], return_tensors = "pt").to("cuda")
+# text_streamer = TextStreamer(tokenizer)
+# _ = model.generate(**inputs, streamer = text_streamer, max_new_tokens = 128)
 
 model.save_pretrained_merged("/workspace/qwen2.5-0.5B-Instruct-f16", tokenizer, save_method = "merged_16bit",)
 
-model.save_pretrained_gguf("/workspace/qwen2.5-0.5B-Instruct-f16-gguf", tokenizer, quantization_method = "f16")
+# 依赖llama.cpp
+# model.save_pretrained_gguf("/workspace/qwen2.5-0.5B-Instruct-f16-gguf", tokenizer, quantization_method = "f16")
